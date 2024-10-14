@@ -294,7 +294,7 @@ class DFS_tree_search(base_search_method):
                         status=status
                     ) for callback in self.callbacks]
                     if status != 0:
-                        # return code defination can be seen in Downstream_tasks/rapid_api
+                        # return code definition can be seen in Downstream_tasks/rapid_api
                         if status == 4:
                             temp_now_node.pruned = True
                         elif status == 1:  # hallucination api name

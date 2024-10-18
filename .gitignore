@@ -4,3 +4,4 @@
 *.ipynb
 data
 keys.json
+log_file.txt

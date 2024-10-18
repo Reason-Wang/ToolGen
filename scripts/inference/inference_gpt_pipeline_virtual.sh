@@ -1,14 +1,15 @@
 export TOOLBENCH_KEY="Set your toolbench key here"
 export OPENAI_KEY="Set your openai api key here"
 export PYTHONPATH=./
-
-export GPT_MODEL="gpt-3.5-turbo-16k"
 export SERVICE_URL="http://localhost:8080/virtual"
 
+
+export GPT_MODEL="gpt-3.5-turbo-16k"
 export OUTPUT_DIR="data/answer/test"
-group=G2_instruction
+group="G2_instruction"
+
 mkdir -p $OUTPUT_DIR; mkdir -p $OUTPUT_DIR/$group
-python toolbench/inference/qa_pipeline_multithread.py \
+python evaluation/toolbench/inference/qa_pipeline_multithread.py \
     --tool_root_dir data/toolenv/tools \
     --backbone_model chatgpt_function \
     --chatgpt_model $GPT_MODEL \

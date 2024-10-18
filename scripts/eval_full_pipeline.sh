@@ -1,3 +1,5 @@
+export TOOLBENCH_KEY="Set your toolbench key here"
+export OPENAI_KEY="Set your openai api key here"
 export PYTHONPATH=./
 export GPT_MODEL="gpt-3.5-turbo-16k"
 export SERVICE_URL="http://localhost:8080/virtual"
@@ -13,76 +15,26 @@ export SERVICE_URL="http://localhost:8080/virtual"
 # function_provider="truth"
 # backbone_model="toolllama"
 
-# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot"
+# MODEL_NAME="ToolLlama-Llama-3-8B-cot"
 # model_path="reasonwang/ToolLlama-Llama-3-8B"
 # function_provider="truth"
 # backbone_model="toolchat"
 
 
-# MODEL_NAME="ToolGen-Atomic-WTokens-Llama-3-8B-t0.0-cot"
-# model_path="../models/VAgent/toolgen-llama-3-8b-tool-wplanning-wtokens-half"
-
-# MODEL_NAME="ToolGen-Atomic-Planning-Prefix-Llama-3-8B-t0.0-cot-retry-finish"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-
-# MODEL_NAME="ToolGen-Atomic-Epoch4-Mixed-Llama-3-8B-t0.0-cot"
-# model_path="../models/VAgent/llama-3-8b-tool-mixed"
-
-# MODEL_NAME="ToolGen-Atomic-Llama-3-8B-t0.0-cot-replace"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-# replace_file="../datasets/toolgen/G3_instruction_new_queries.json"
-
-# MODEL_NAME="ToolGen-Atomic-Llama-3-8B-t0.0-cot-noconstrain-retry-finish"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-
-# MODEL_NAME="ToolGen-Atomic-Llama-3-8B-t0.0-cot-retry-finish"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-
-# MODEL_NAME="test"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-
-# MODEL_NAME="ToolGen-Atomic-Llama-3-8B-t0.0-cot-gpt4o-answer-rewrite"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-
-# MODEL_NAME="ToolGen-Atomic-Filter-Llama-3-8B-t0.0-cot"
-# model_path="../models/VAgent/ToolGen-Atomic-Llama-3-8B-Tool-Planning-Filter"
-
-# MODEL_NAME="ToolGen-Atomic-Llama-3-8B-t0.0-cot-unconstrain"
-# model_path="reasonwang/VAgent-Llama-3-8B-Planning-Full"
-
-# MODEL_NAME="ToolGen-Atomic-Llama-3-8B-Tool-WoPlanning-t0.0-cot"
-# model_path="../models/VAgent/ToolGen-Atomic-Llama-3-8B-Tool-WoPlanning"
-
-# indexing="Atomic"
-# function_provider="all"
-# backbone_model="vagent"
-
-# MODEL_NAME="ToolGen-Semantic-Planning-Llama-3-8B--t0.0-cot"
-# model_path="reasonwang/ToolGen-Semantic-Llama-3-8B-Tool-Planning"
-
-# MODEL_NAME="ToolGen-Numeric-Planning-Llama-3-8B--t0.0-cot"
-# model_path="../models/VAgent/ToolGen-Numeric-Llama-3-8B-Tool-Planning"
-
-# MODEL_NAME="ToolGen-Hierarchical-Planning-Llama-3-8B--t0.0-cot"
-# model_path="../models/VAgent/ToolGen-Hierarchical-Llama-3-8B-Tool-Planning"
-
-# MODEL_NAME="ToolGen-Semantic-Planning-Llama-3-8B--t0.0-cot-unconstrain-retry-finish"
-# model_path="reasonwang/ToolGen-Semantic-Llama-3-8B-Tool-Planning"
-# indexing="Semantic"
-
-# MODEL_NAME="ToolGen-Semantic-Planning-Llama-3-8B--t0.0-cot-unconstrain"
-# model_path="reasonwang/ToolGen-Semantic-Llama-3-8B-Tool-Planning"
-# indexing="Semantic"
-
-MODEL_NAME="ToolGen-Numeric-Planning-Llama-3-8B--t0.0-cot-unconstrain-retry-finish"
-indexing="Numeric"
-model_path="../models/VAgent/ToolGen-Numeric-Llama-3-8B-Tool-Planning"
+MODEL_NAME="ToolGen-Semantic-Llama-3-8B-cot"
+model_path="reasonwang/ToolGen-Semantic-Llama-3-8B"
+indexing="Semantic"
 function_provider="all"
-backbone_model="toolgen"
+if [ $indexing == "Atomic" ]; then
+    backbone_model="toolgen_atomic"
+else
+    backbone_model="toolgen"
+fi
 
-export CUDA_VISIBLE_DEVICES=2
+
+export CUDA_VISIBLE_DEVICES=0
 OUTPUT_DIR="data/answer/${MODEL_NAME}"
-stage="G1"
+stage="G2"
 group="instruction"
 method="CoT@1"
 
@@ -120,9 +72,7 @@ echo $cmd
 eval $cmd
 
 
-
-export API_POOL_FILE=openai_key_mbz.json
-# export API_POOL_FILE=openai_key.json
+export API_POOL_FILE=openai_keys.json
 SAVE_PATH="data/results/pass_rate"
 mkdir -p ${SAVE_PATH}
 export EVAL_MODEL=gpt-4-turbo-2024-04-09
@@ -135,16 +85,16 @@ cmd="python -m toolbench.tooleval.eval_pass_rate \
     --test_ids data/solvable_queries/test_query_ids \
     --max_eval_threads 3 \
     --evaluate_times 3 \
-    --test_set ${stage}_${group} --overwrite"
+    --test_set ${stage}_${group}"
 echo $cmd
 eval $cmd
 
 
-export API_POOL_FILE=openai_key.json
+export API_POOL_FILE=openai_keys.json
 SAVE_PATH="data/results/preference_rate"
 PASS_RATE_PATH="data/results/pass_rate"
 REFERENCE_MODEL=virtual-gpt35-16k-step16-cot
-export EVAL_MODEL=gpt-4o
+export EVAL_MODEL=gpt-4o-2024-05-13
 mkdir -p ${SAVE_PATH}
 
 cmd="python -m toolbench.tooleval.eval_preference \
@@ -157,6 +107,6 @@ cmd="python -m toolbench.tooleval.eval_preference \
     --max_eval_threads 3 \
     --use_pass_rate true \
     --evaluate_times 3 \
-    --test_set ${stage}_${group} --overwrite"
+    --test_set ${stage}_${group}"
 echo $cmd
 eval $cmd

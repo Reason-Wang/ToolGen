@@ -1,29 +1,10 @@
-# model="bert_G1_retrieval"
-# ../models/ToolLlama/retriever/${model}
-# model="ToolBench/ToolBench_IR_bert_based_uncased"
-# # model="reasonwang/BERT-G3"
-# stage="G1"
-# split="test"
-# result_path="bert_G3_retrieval"
-# # replace_file="../datasets/toolgen/G3_instruction_new_queries.json"
-
-# cmd="python -m evaluation.eval_encoder_efficiency \
-#     --model_name_or_path ${model} \
-#     --stage ${stage} \
-#     --split ${split} \
-#     --result_path \"data/results/retrieval/${result_path}_${stage}_${split}.json\""
-
-# echo $cmd
-# eval $cmd
-
-# model="ToolBench/ToolBench_IR_bert_based_uncased"
-export CUDA_VISIBLE_DEVICES=4
-model="reasonwang/BERT-G3"
-stage="G2"
-split="category"
-corpus="G123"
+# model="reasonwang/BERT-G3"
+model="ToolBench/ToolBench_IR_bert_based_uncased"
+stage="G1" # G1, G2, G3
+split="instruction"
+corpus="G123" # G123, G1, G2, G3. G123 is the multi-domain setting
 result_path="BERT-G1-full-tools"
-cmd="python -m evaluation.eval_encoder \
+cmd="python -m evaluation.retrieval.eval_encoder \
     --model_name_or_path ${model} \
     --stage ${stage} \
     --split ${split} \

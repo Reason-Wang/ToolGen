@@ -3,54 +3,24 @@ OPENAI_KEY=""
 export PYTHONPATH=./
 export GPT_MODEL="gpt-3.5-turbo-16k"
 export SERVICE_URL="http://localhost:8080/virtual"
+
 # MODEL_NAME="virtual-gpt35-16k-step16-cot-opendomain"
 # model_path="virtual-gpt35-16k-step16-cot"
 # backbone_model="chatgpt_function"
 # function_provider="retriever"
 
-# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-opendomain-toolretriever"
-# model_path="reasonwang/ToolLlama-Llama-3-8B"
-# function_provider="retriever"
-# backbone_model="toolchat"
-
-MODEL_NAME="virtual-gpt35-16k-step16-cot-opendomain-toolretriever-retry-finish"
-model_path="virtual-gpt35-16k-step16-cot"
-indexing="None"
-replace_file="None"
-backbone_model="chatgpt_function"
+MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-toolretriever"
+model_path="reasonwang/ToolLlama-Llama-3-8B"
 function_provider="retriever"
+backbone_model="toolchat"
 
 
-# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-toolretriever-G123corpus"
+
+# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-toolretriever"
 # model_path="reasonwang/ToolLlama-Llama-3-8B"
 # function_provider="retriever"
 # backbone_model="toolchat"
 
-# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-retrieval-G123corpus-replace"
-# model_path="reasonwang/ToolLlama-Llama-3-8B"
-# function_provider="retriever"
-# backbone_model="toolchat"
-# replace_file="../datasets/toolgen/G3_instruction_new_queries.json"
-
-# MODEL_NAME="vagent-llama-3-toolllama-g123-wplannin-cot"
-# model_path="../models/VAgent/llama-3-8b-toolllama-g123-wplanning-full"
-# function_provider="all"
-# backbone_model="vagent"
-
-# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-opendomain-toolretriever-retry-finish"
-# model_path="reasonwang/ToolLlama-Llama-3-8B"
-
-# MODEL_NAME="ToolLlama-Llama-3-8B-Filter-t0.0-cot-opendomain-toolretriever"
-# model_path="../models/ToolLlama/ToolLlama-Llama-3-8B-Tool-Planning-Filter"
-
-
-
-# MODEL_NAME="ToolLlama-Llama-3-8B-t0.0-cot-toolretriever-G123corpus-gpt4o-answer-rewrite"
-# model_path="reasonwang/ToolLlama-Llama-3-8B"
-
-# replace_file="None"
-# function_provider="retriever"
-# backbone_model="toolchat"
 
 # MODEL_NAME="ToolLlama-v2-t0.0-cot-opendomain-toolretriever-retry-finish"
 # model_path="ToolBench/ToolLLaMA-2-7b-v2"
@@ -62,8 +32,8 @@ function_provider="retriever"
 
 
 OUTPUT_DIR="data/answer/${MODEL_NAME}"
-export CUDA_VISIBLE_DEVICES=5
-stage="G1"
+export CUDA_VISIBLE_DEVICES=0
+stage="G2"
 group="instruction"
 method="CoT@1"
 

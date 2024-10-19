@@ -5,3 +5,5 @@
 data
 keys.json
 log_file.txt
+*tar.gz
+.vscode

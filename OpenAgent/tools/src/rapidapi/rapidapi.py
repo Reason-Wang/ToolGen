@@ -3,6 +3,7 @@ import json
 from tqdm import tqdm
 from .utils import standardize, change_name, finish
 from .server import query_rapidapi
+from huggingface_hub import hf_hub_download
 
 # For pipeline environment preparation
 def get_white_list(tool_root_dir):
@@ -146,8 +147,10 @@ def api_json_to_openai_json(api_json, standard_tool_name):
     return function_templete, api_json["category_name"],  pure_api_name
 
 def load_tool_package():
-    with open("data/toolenv/tools"+"/"+"tools.json", 'r') as f:
+    tools_path = hf_hub_download(repo_id="reasonwang/ToolGen-Llama-3-8B", filename="tools.json")
+    with open(tools_path, 'r') as f:
         all_tools = json.load(f)
+
     data_dict = {'api_list':[]}
     for tool in all_tools:
         data_dict['api_list'].extend(fetch_api_json_from_tool(tool)["api_list"])

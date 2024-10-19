@@ -49,6 +49,8 @@ toolgen.start(
 
 ```
 ## ToolGen
+Download and decompress [data.tar.gz](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets/blob/main/data.tar.gz). Other datasets are at [🤗ToolGen-Datasets](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets).
+
 ### Tool Virtualization
 The first step is to map tools into tokens. We have extracted all the tools in ToolBench and converted them into tokens. Which is shown in [virtual_tokens.txt](data/virtual_tokens.txt). The following code adds the tokens into the vircabulary and expand model embeddings.
 
@@ -137,7 +139,8 @@ python -m evaluation.retrieval.eval_toolgen \
 ```
 
 ### Inference
-For end-to-end evaluation, first inference on queries to generate trajectories. Scripts can be found at `scripts/inference`
+For end-to-end evaluation, first get [ToolBench](https://github.com/OpenBMB/ToolBench) Key and run [StableToolBench](https://github.com/THUNLP-MT/StableToolBench).
+Then inference on queries to generate trajectories. Scripts can be found at `scripts/inference`
 
 ### Solvable Pass Rate
 First, using `scripts/convert_answer/run_convert_answer.sh` to convert trajectory format. Then run `scripts/pass_rate/run_pass_rate.sh` for pass rate evaluation.

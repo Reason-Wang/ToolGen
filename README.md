@@ -9,7 +9,7 @@
     <!-- <a href="https://huggingface.co/datasets/reasonwang/ToolGen-Datasets">🤗ToolGen Datasets</a> -->
 </p>
 
-ToolGen is a framework that integrats tool knowledge directly into LLMs by representing tools as unique tokens, enabling seamless tool invocation and language generation.🔧🦙 With 47,000 tool tokens, ToolGen shows superior performance in both tool retrieval and task completion.
+ToolGen is a framework that integrates tool knowledge directly into LLMs by representing tools as unique tokens, enabling seamless tool invocation and language generation.🔧🦙 With 47,000 tool tokens, ToolGen shows superior performance in both tool retrieval and task completion.
 
 
 ## Run ToolGen
@@ -52,7 +52,7 @@ toolgen.start(
 Download and decompress [data.tar.gz](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets/blob/main/data.tar.gz). Other datasets are at [🤗ToolGen-Datasets](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets).
 
 ### Tool Virtualization
-The first step is to map tools into tokens. We have extracted all the tools in ToolBench and converted them into tokens. Which is shown in [virtual_tokens.txt](data/virtual_tokens.txt). The following code adds the tokens into the vircabulary and expand model embeddings.
+The first step is to map tools into tokens. We have extracted all the tools in ToolBench and converted them into tokens, as shown in [virtual_tokens.txt](data/virtual_tokens.txt). The following code adds the tokens into the vocabulary and expands model embeddings.
 
 ```python
 with open('data/virtual_tokens.txt', 'r') as f:
@@ -84,7 +84,7 @@ for combined_token, virtual_token in zip(combined_tokens, virtual_tokens):
 ```
 
 ### Tool Memorization
-After tool virtualization, there is three-stage training to finetune ToolGen. The first stage is tool memorization, which trains the model to memorize all tool tokens. The data for this stage is at [🤗ToolGen-Memorization](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets/blob/main/toolgen_atomic_memorization.json). We have converted the format into sharegpt-like format for an easy integration of current training framework like [FastChat](https://github.com/lm-sys/FastChat) and [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory). Note that we train the first stage for 8 epochs. A sample is shown bellow:
+After tool virtualization, there is a three-stage training to finetune ToolGen. The first stage is tool memorization, which trains the model to memorize all tool tokens. The data for this stage is at [🤗ToolGen-Memorization](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets/blob/main/toolgen_atomic_memorization.json). We have converted the format into ShareGPT-like format for an easy integration with current training framework like [FastChat](https://github.com/lm-sys/FastChat) and [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory). Note that we train the first stage for 8 epochs. A sample is shown bellow:
 ```
 {
     "conversations": [
@@ -103,7 +103,7 @@ After tool virtualization, there is three-stage training to finetune ToolGen. Th
 ```
 
 ### Retrieval Training
-The second stage mainly trains the tool retrieval capability of ToolGen. The data is also at [🤗ToolGen-Retrieval](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets/blob/main/toolgen_atomic_retrieval_G123.json). We train it for 1 epoch. After the second stage training, we obtain ToolGen-Retriever. A sample is showing below:
+The second stage mainly trains the tool retrieval capability of ToolGen. The data is also at [🤗ToolGen-Retrieval](https://huggingface.co/datasets/reasonwang/ToolGen-Datasets/blob/main/toolgen_atomic_retrieval_G123.json). We train it for 1 epoch. After the second stage training, we obtain ToolGen-Retriever. A sample is shown below:
 ```
 {
     "conversations": [
@@ -126,7 +126,7 @@ Finally, we train the ToolGen with agent trajectories to enable them task comple
 
 ## Evaluation
 ### Retrieval
-The following command shows an example to evaluate the retrieval performance. Other tool retrieval evaluation scripts can be found at `scripts/retrieval`.
+The following command shows an example to evaluate the retrieval performance. Other tool retrieval evaluation scripts can be found in `scripts/retrieval`.
 
 ```
 python -m evaluation.retrieval.eval_toolgen \
@@ -140,7 +140,7 @@ python -m evaluation.retrieval.eval_toolgen \
 
 ### Inference
 For end-to-end evaluation, first get [ToolBench](https://github.com/OpenBMB/ToolBench) Key and run [StableToolBench](https://github.com/THUNLP-MT/StableToolBench).
-Then inference on queries to generate trajectories. Scripts can be found at `scripts/inference`
+Then, perform inference on queries to generate trajectories. Scripts can be found in `scripts/inference`
 
 ### Solvable Pass Rate
 First, using `scripts/convert_answer/run_convert_answer.sh` to convert trajectory format. Then run `scripts/pass_rate/run_pass_rate.sh` for pass rate evaluation.

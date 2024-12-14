@@ -14,10 +14,16 @@ class BM25Indexer:
         self.bm25 = BM25Okapi(self.tokenized_corpus)
     
     def search(self, queries, top_n=5):
+        if isinstance(queries, str):
+            queries = [queries]
         tokenized_queries = [word_tokenize(query.lower()) for query in queries]
         docs_scores = [self.bm25.get_scores(tokenized_query) for tokenized_query in tokenized_queries]
+
         docs_scores = [[(score, idx) for idx, score in enumerate(doc_scores)] for doc_scores in docs_scores]
         scores_ids = [sorted(doc_scores, reverse=True)[:top_n] for doc_scores in docs_scores]
+
+        # For tests only
+        # scores_ids = [(doc_scores)[:top_n] for doc_scores in docs_scores]
         
         new_scores_ids = []
         for score_ids in scores_ids:

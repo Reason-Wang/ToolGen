@@ -1,14 +1,20 @@
-export TOOLBENCH_KEY="Set your toolbench key here"
-export OPENAI_KEY="Set you openai api key here"
+export TOOLBENCH_KEY="Set your ToolBench key here"
+export OPENAI_KEY="Set your OpenAI key here"
 export PYTHONPATH=./
 export SERVICE_URL="http://localhost:8080/virtual"
 export CUDA_VISIBLE_DEVICES=0
 
 model_path="reasonwang/ToolGen-Llama-3-8B"
 indexing="Atomic"
+template="llama-3"
 
-export OUTPUT_DIR="data/answer/test/"
-stage="G2"
+# model_name="Qwen2.5-3B"
+# model_path="reasonwang/ToolGen-${model_name}"
+# indexing="Atomic"
+# template="qwen-7b-chat"
+
+export OUTPUT_DIR="data/answer/${model_name}/"
+stage="G3"
 group="instruction"
 
 if [ $indexing == "Atomic" ]; then
@@ -17,10 +23,11 @@ else
     backbone_model="toolgen"
 fi
 
-mkdir -p $OUTPUT_DIR; mkdir -p $OUTPUT_DIR/$group
+mkdir -p $OUTPUT_DIR; mkdir -p $OUTPUT_DIR/${stage}_${group}
 python evaluation/toolbench/inference/qa_pipeline_multithread.py \
     --chatgpt_model gpt-4o \
     --model_path ${model_path} \
+    --template ${template} \
     --indexing ${indexing} \
     --tool_root_dir data/toolenv/tools \
     --backbone_model ${backbone_model} \

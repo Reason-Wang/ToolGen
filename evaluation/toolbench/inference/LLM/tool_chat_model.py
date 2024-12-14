@@ -54,8 +54,9 @@ class ToolChatModel:
             model_max_length=self.max_sequence_length
         )
         # Only support llama-3 currently
-        self.tokenizer.eos_token = "<|eot_id|>"
-        self.tokenizer.eos_token_id = 128009
+        if self.template == "llama-3":
+            self.tokenizer.eos_token = "<|eot_id|>"
+            self.tokenizer.eos_token_id = 128009
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
             torch_dtype=torch.bfloat16,
@@ -130,7 +131,7 @@ class ToolChatModel:
             tools: List,
             process_id,
             add_tools=True,
-            do_retry=True,
+            do_retry=False,
             retry_action=False,
             retry_give_up=True,
             retry_sorry=True,
@@ -169,6 +170,7 @@ class ToolChatModel:
             if turn["role"] == "system":
                 if add_tools:
                     content = process_system_message(turn["content"], functions)
+                    # content = process_system_message(turn["content"], functions) + " Answer **Correctly**"
                     conv.set_system_message(content)
                 else:
                     conv.set_system_message(SystemWOTool)
@@ -219,7 +221,9 @@ class ToolChatModel:
             # Use -1 to avoid eos_token
             predictions = self.tokenizer.decode(outputs[0][input_length:-1])
             # print(f"Predictions: {predictions}")
-            decoded_token_len = len(self.tokenizer(predictions)[0])
+            # inputs = self.tokenizer(predictions)
+            # print(f"Inputs: {inputs}")
+            decoded_token_len = len(self.tokenizer(predictions)['input_ids'])
             if process_id == 0:
                 print(f"[process({process_id})]total tokens: {decoded_token_len}")
             thought, action, arguments = react_parser(predictions)

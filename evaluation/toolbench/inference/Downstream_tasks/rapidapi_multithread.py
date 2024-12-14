@@ -668,15 +668,18 @@ class pipeline_runner:
                 backbone_model = ToolLLaMA(model_name_or_path=args.model_path, max_sequence_length=args.max_sequence_length)
         elif args.backbone_model == "toolchat":
             backbone_model = ToolChatModel(
-                model_name_or_path=args.model_path
+                model_name_or_path=args.model_path,
+                template=args.template,
             )
         elif args.backbone_model == "toolgen_atomic":
             backbone_model = ToolGenAtomic(
-                model_name_or_path=args.model_path
+                model_name_or_path=args.model_path,
+                template=args.template,
             )
         elif args.backbone_model == "toolgen":
             backbone_model = ToolGen(
                 model_name_or_path=args.model_path,
+                template=args.template,
                 indexing=args.indexing
             )
         else:

@@ -145,17 +145,10 @@ def openai_client_request(client, model, messages, num_retries: int = 5, return_
 class OpenAIChatModel:
     def __init__(self, model: str, api_key, api_base=None, api_version=None, azure_endpoint=None, temperature: float=None, stop: List[str]=None):
         self.model = model
-        if model == 'gpt-4o':
-            self.client = AzureOpenAI(
-                api_key=api_key,
-                api_version=api_version,
-                azure_endpoint=azure_endpoint,
-            )
+        if api_base:
+            self.client = OpenAI(api_key=api_key, api_base=api_base)
         else:
-            if api_base:
-                self.client = OpenAI(api_key=api_key, api_base=api_base)
-            else:
-                self.client = OpenAI(api_key=api_key)
+            self.client = OpenAI(api_key=api_key)
         self.temperature = temperature
         self.stop = stop
 
@@ -182,3 +175,17 @@ class OpenAIChatModel:
         )
         
         return response
+
+
+def seed_everything(seed: int):
+    import random, os
+    import numpy as np
+    import torch
+    
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True

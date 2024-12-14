@@ -7,3 +7,5 @@ keys.json
 log_file.txt
 *tar.gz
 .vscode
+scripts/retrieval/efficiency
+evaluation/retrieval/efficiency

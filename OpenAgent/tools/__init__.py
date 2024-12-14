@@ -1,0 +1,1 @@
+from .src.rapidapi.rapidapi import RapidAPIWrapper

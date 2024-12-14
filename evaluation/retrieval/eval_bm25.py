@@ -1,3 +1,4 @@
+import time
 from evaluation.toolbench.retrieval.api_evaluator import APIEvaluator
 from sentence_transformers import SentenceTransformer, models, InputExample, losses, LoggingHandler
 import pandas as pd

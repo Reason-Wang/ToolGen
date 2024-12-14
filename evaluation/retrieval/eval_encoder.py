@@ -120,23 +120,32 @@ def main(
     # Search
     queries = list(ir_test_queries.values())
     queries_ids = list(ir_test_queries.keys())
+    time1 = time.time()
     query_embeddings = get_embeddings(
             model,
             device="cuda",
             texts=queries,
             batch_size=64
         )
+    time2 = time.time()
+    print("Query Embedding time:", time2 - time1)
 
     corpus_ids = list(ir_corpus.keys())
     corpus = [ir_corpus[cid] for cid in corpus_ids]
+    time1 = time.time()
     doc_embeddings = get_embeddings(
         model,
         device="cuda",
         texts=corpus,
         batch_size=64
     )
-
+    time2 = time.time()
+    print("Doc Embedding time:", time2 - time1)
+    
+    time1 = time.time()
     indexer = Indexer(doc_embeddings, doc_embeddings.shape[1], ids=corpus_ids)
+    time2 = time.time()
+    print("Indexing time:", time2 - time1)
     
 
     def compute_ndcg(relevant_docs_ids, score_docid, k):

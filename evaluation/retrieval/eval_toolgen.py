@@ -1,4 +1,5 @@
 import json
+import time
 import click
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList
@@ -33,8 +34,8 @@ def compute_ndcg(action_vocab, label_actions, pred_actions, pred_scores, k):
     return metrics.ndcg_score([true_relevance], [predicted_scores], k=k)
 
 
-def constrained_beam_search(query, model, tokenizer, device, trie, constrain=True):
-    conv = get_conv_template("llama-3")
+def constrained_beam_search(query, model, tokenizer, device, trie, constrain=True, template="llama-3"):
+    conv = get_conv_template(template)
     conv.append_message(conv.roles[0], query)
     conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt()
@@ -53,7 +54,7 @@ def constrained_beam_search(query, model, tokenizer, device, trie, constrain=Tru
             logits_processor=logits_processor,
             num_beams=5,
             num_return_sequences=5,
-            eos_token_id=128009
+            eos_token_id=tokenizer.eos_token_id
         )
     else:
         print("Unconstrained beam search.")
@@ -63,7 +64,7 @@ def constrained_beam_search(query, model, tokenizer, device, trie, constrain=Tru
             max_new_tokens=64,
             num_beams=5,
             num_return_sequences=5,
-            eos_token_id=128009
+            eos_token_id=tokenizer.eos_token_id
         )
     outputs = outputs[:, inputs['input_ids'].shape[1]:]
     return outputs
@@ -81,14 +82,20 @@ python -m evaluation.eval_vagent \
 @click.option('--split', type=str, help="The split of the data.")
 @click.option('--result_path', type=str, help="The result file.")
 @click.option('--constrain', type=bool, help="Whether to constrain the beam search.")
+@click.option('--limit_to_stage_space', type=bool)
+@click.option('--template', type=str, help="The template of the conversation.")
 def main(
     model_name_or_path: str,
     indexing: str,
     stage: str,
     split: str,
     result_path: str,
-    constrain: bool
+    constrain: bool,
+    limit_to_stage_space: bool,
+    template: str
 ):
+    from evaluation.utils.utils import seed_everything
+    seed_everything(0)
     ir_test_queries = {}
     ir_relevant_docs = {}
     def process_retrieval_ducoment(documents_df):
@@ -128,24 +135,52 @@ def main(
 
     device = "cuda:0"
 
-    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+    if 'checkpoint' in model_name_or_path.lower():
+        tokenizer_path = os.path.dirname(model_name_or_path)
+    else:
+        tokenizer_path = model_name_or_path
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    # tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+
     
-    if indexing == "Atomic":
-        with open('data/virtual_tokens.txt', 'r') as f:
-            virtual_tokens = f.readlines()
-            virtual_tokens = [unidecode(vt.strip()) for vt in virtual_tokens]
-        tokenizer.add_tokens(new_tokens=virtual_tokens, special_tokens=False)
+    # if indexing == "Atomic":
+    #     with open('data/virtual_tokens.txt', 'r') as f:
+    #         virtual_tokens = f.readlines()
+    #         virtual_tokens = [unidecode(vt.strip()) for vt in virtual_tokens]
+    #     tokenizer.add_tokens(new_tokens=virtual_tokens, special_tokens=False)
     
-    tokenizer.eos_token_id = 128009
+    if template == "llama-3":
+        tokenizer.eos_token_id = 128009
+    elif template == "qwen-7b-chat":
+        tokenizer.eos_token_id = 151645
     model = AutoModelForCausalLM.from_pretrained(
         model_name_or_path,
         torch_dtype=torch.bfloat16,
         device_map=device,
     )
 
+    if limit_to_stage_space:
+        # Limit generation to the space of this stage
+        candidates = set()
+        skipped_num = 0
+        documents_df = pd.read_csv(os.path.join(data_path, 'corpus.tsv'), sep='\t')
+        for row in documents_df.itertuples():
+            doc = json.loads(row.document_content)
+            tool_name = doc.get('tool_name', '')
+            api_name = doc.get('api_name', '')
+            toolbench_name = get_toolbench_name(tool_name, api_name)
+            if toolbench_name in Tool2Id:
+                candidate = Tool2Id[toolbench_name]
+                candidates.add(candidate)
+            else:
+                skipped_num += 1
+        candidates = list(candidates)
+    else:
+        # Limit the space to all possible tools
+        candidates = list(Tool2Id.values())
+    if constrain:
+        print(f"Space dimension: {len(candidates)}")
 
-
-    candidates = list(Tool2Id.values())
     action_vocab = {action: i for i, action in enumerate(candidates)}
     token_ids = tokenizer(candidates, add_special_tokens=False).input_ids
     token_ids = [ids + [tokenizer.eos_token_id] for ids in token_ids]
@@ -158,9 +193,32 @@ def main(
     
     queries = list(ir_test_queries.values())
     query_ids = list(ir_test_queries.keys())
+
+    # # Only for time measurement
+    # test_full_prompts = []
+    # for query_id, query in tqdm(zip(query_ids, queries), total=len(queries)):
+    #     conv = get_conv_template(template)
+    #     conv.append_message(conv.roles[0], query)
+    #     conv.append_message(conv.roles[1], None)
+    #     prompt = conv.get_prompt()
+    #     test_full_prompts.append(prompt)
+    # inputs = tokenizer(test_full_prompts, return_tensors='pt', add_special_tokens=False, padding_side="left", padding=True)
+    # for k, v in inputs.items():
+    #     inputs[k] = v.to(device)
+    # time1 = time.time()
+    # outputs = model.generate(
+    #     **inputs,
+    #     do_sample=False,
+    #     max_new_tokens=2,
+    #     num_beams=5,
+    #     num_return_sequences=5,
+    #     eos_token_id=tokenizer.eos_token_id
+    # )
+    # time2 = time.time()
+    # print("Time for generating 2 tokens:", time2 - time1)
     for query_id, query in tqdm(zip(query_ids, queries), total=len(queries)):
 
-        outputs = constrained_beam_search(query, model, tokenizer, device, trie, constrain=constrain)
+        outputs = constrained_beam_search(query, model, tokenizer, device, trie, constrain=constrain, template=template)
         pred_actions = tokenizer.batch_decode(outputs, skip_special_tokens=True)
         pred_actions.extend(["" for _ in range(95)])
         pred_actions_list.append(pred_actions)

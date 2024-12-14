@@ -623,7 +623,7 @@ class ToolGen:
         restrict_to_ground_truth_tools=False,
         add_planning_prefix=False,
         add_relevant_tokens=False,
-        do_retry=True,
+        do_retry=False,
         retry_action=False,
         retry_give_up=True,
         retry_sorry=True,

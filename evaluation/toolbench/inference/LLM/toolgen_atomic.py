@@ -71,19 +71,19 @@ SystemPromptTokens = '''You are an AutoGPT, capable of utilizing numerous tools 
     
     Actions: {actions}'''
 
-def load_virtual_tokenizer(model_name_or_path, cache_dir=None):
-        print(f"Loading Llama-3 tokenizer with virtual tokens.")
-        tokenizer = AutoTokenizer.from_pretrained(
-            "meta-llama/Meta-Llama-3-8B", 
-            cache_dir=cache_dir,
-        )
+# def load_virtual_tokenizer(model_name_or_path, cache_dir=None):
+#         print(f"Loading Llama-3 tokenizer with virtual tokens.")
+#         tokenizer = AutoTokenizer.from_pretrained(
+#             "meta-llama/Meta-Llama-3-8B", 
+#             cache_dir=cache_dir,
+#         )
         
-        with open('data/virtual_tokens.txt', 'r') as f:
-            virtual_tokens = f.readlines()
-            virtual_tokens = [unidecode(vt.strip()) for vt in virtual_tokens]
-        tokenizer.add_tokens(new_tokens=virtual_tokens, special_tokens=False)
-        print(f"Added {len(virtual_tokens)} virtual tokens")
-        return tokenizer
+#         with open('data/virtual_tokens.txt', 'r') as f:
+#             virtual_tokens = f.readlines()
+#             virtual_tokens = [unidecode(vt.strip()) for vt in virtual_tokens]
+#         tokenizer.add_tokens(new_tokens=virtual_tokens, special_tokens=False)
+#         print(f"Added {len(virtual_tokens)} virtual tokens")
+#         return tokenizer
 
 
 def load_tool_documentation():
@@ -199,10 +199,15 @@ class ToolGenAtomic:
         self.template = template
         self.max_sequence_length = max_sequence_length
         # self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, use_fast=False, model_max_length=self.max_sequence_length)
-        self.tokenizer = load_virtual_tokenizer(model_name_or_path)
+        # self.tokenizer = load_virtual_tokenizer(model_name_or_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
         # Only support llama-3 currently
-        self.tokenizer.eos_token = "<|eot_id|>"
-        self.tokenizer.eos_token_id = 128009
+        if template == "llama-3":
+            self.tokenizer.eos_token = "<|eot_id|>"
+            self.tokenizer.eos_token_id = 128009
+        elif template == "qwen-7b-chat":
+            self.tokenizer.eos_token = "<|im_end|>"
+            self.tokenizer.eos_token_id = 151645
         
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
@@ -338,11 +343,11 @@ class ToolGenAtomic:
         virtual_tool_ids = []
         for tool in tools:
             if tool in self.toolbench_name_to_token:
-                tool_id = self.tokenizer(self.toolbench_name_to_token[tool])['input_ids'][1]
+                tool_id = self.tokenizer(self.toolbench_name_to_token[tool], add_special_tokens=False)['input_ids'][0]
             virtual_tool_ids.append(tool_id)
 
         # We also need to add the finish token and eos_token
-        tool_id = self.tokenizer("<<Finish>>")['input_ids'][1]
+        tool_id = self.tokenizer("<<Finish>>", add_special_tokens=False)['input_ids'][0]
         virtual_tool_ids.append(tool_id)
         # virtual_tool_ids.append(128009)
         print(f"virtual_tool_ids: {virtual_tool_ids}")

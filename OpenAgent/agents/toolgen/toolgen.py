@@ -186,8 +186,12 @@ class ToolGen(SingleChainAgent):
         # self.tokenizer = load_tokenizer(model_name_or_path, indexing=indexing)
         # Only support llama-3 currently
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-        self.tokenizer.eos_token = "<|eot_id|>"
-        self.tokenizer.eos_token_id = 128009
+        if template == "llama-3":
+            self.tokenizer.eos_token = "<|eot_id|>"
+            self.tokenizer.eos_token_id = 128009
+        elif template == "qwen-7b-chat":
+            self.tokenizer.eos_token = "<|im_end|>"
+            self.tokenizer.eos_token_id = 151645
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
             torch_dtype=torch.bfloat16,

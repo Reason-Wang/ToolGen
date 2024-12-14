@@ -39,11 +39,12 @@ if __name__ == "__main__":
     parser.add_argument('--function_provider', type=str, default="truth", required=False, help='')
     parser.add_argument('--replace_file', type=str, default="", required=False, help='')
     parser.add_argument('--indexing', type=str, default="")
+    parser.add_argument('--template', type=str, default="")
     args = parser.parse_args()
     if args.overwrite:
         os.system(f"rm -rf {args.output_answer_file}")
 
-    from evaluation.toolbench.inference.utils import seed_everything
+    from evaluation.utils.utils import seed_everything
     seed_everything(42)
 
     pipeline_runner = pipeline_runner(args, add_retrieval=True if args.retrieval_model_path else False)

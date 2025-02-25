@@ -37,7 +37,7 @@ class SingleChainAgent():
 
         return json_obj
 
-    def start(self, single_chain_max_step, pass_at=1, answer=1, start_messages=None):
+    def start(self, single_chain_max_step, answer=1, start_messages=None, streaming=False):
         if start_messages:
             self.start_messages = start_messages
             
@@ -45,20 +45,23 @@ class SingleChainAgent():
         if "self" in self.forward_args.keys():
             self.forward_args.pop("self")
 
-        for i in range(pass_at):
-            if self.process_id == 0:
-                print(f"[single_chain]try for the {i+1} time")
-            self.tree = Tree()
-            self.tree.root.node_type = "Action Input"
-            self.tree.root.io_state = deepcopy(self.io_func)
-            out_node = self.do_chain(self.tree.root, single_chain_max_step)
+        if self.process_id == 0:
+            print(f"[single_chain] start with maximum {single_chain_max_step} steps")
+        self.tree = Tree()
+        self.tree.root.node_type = "Action Input"
+        self.tree.root.io_state = deepcopy(self.io_func)
+        if streaming:
+            for status in self.do_chain(self.tree.root, single_chain_max_step, streaming=True):
+                yield status
+        else:
+            out_node = self.do_chain(self.tree.root, single_chain_max_step, streaming=False)
             self.chain = out_node.get_chain_result_from_this_node()
             if out_node.io_state.check_success() == 1:
                 self.status = 1
                 self.success_count += 1
                 if self.success_count >= answer:
                     return 1
-        return 0
+            return 0
     
     @abstractmethod
     def change_messages(self, messages):
@@ -137,7 +140,7 @@ class SingleChainAgent():
         return temp_node, status
     
 
-    def do_chain(self, now_node, single_chain_max_step):
+    def do_chain(self, now_node, single_chain_max_step, streaming=False):
         if self.start_messages:
             """In Reflection Algo, we startswith former trials and reflections, so the caller will give the start messages"""
             self.tree.root.messages = self.start_messages
@@ -146,6 +149,12 @@ class SingleChainAgent():
         while True:
             # recursively parse message into nodes
             new_message, error_code, total_tokens = self.get_agent_response(now_node)
+            if streaming:
+                status = {}
+                status["message"] = new_message
+                yield status
+    
+
             temp_node = self.parse_planning(new_message, now_node, error_code)
             if temp_node:
                 now_node = temp_node
@@ -161,6 +170,11 @@ class SingleChainAgent():
                 for i in range(len(tool_calls)):
                     tool_call = tool_calls[i]
                     temp_node, status = self.take_action(tool_call, now_node)
+                    if streaming:
+                        status = {}
+                        status["observation"] = temp_node.observation
+                        yield status
+
                     now_node = temp_node
                     
                     if status != 0:
@@ -185,4 +199,7 @@ class SingleChainAgent():
                 now_node.pruned = True
             
             if now_node.pruned or now_node.is_terminal:
-                return now_node
+                if streaming:
+                    break
+                else:
+                    return now_node

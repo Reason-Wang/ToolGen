@@ -9,3 +9,6 @@ log_file.txt
 .vscode
 scripts/retrieval/efficiency
 evaluation/retrieval/efficiency
+training/wandb
+training/logs
+training/checkpoints

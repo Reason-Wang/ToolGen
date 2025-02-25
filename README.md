@@ -9,6 +9,8 @@
     <!-- <a href="https://huggingface.co/datasets/reasonwang/ToolGen-Datasets">🤗ToolGen Datasets</a> -->
 </p>
 
+`25/02/2025`: Updated the training scripts. Refer to [training/README.md](training/README.md) for more details.
+
 `14/12/2024`: Updated [Qwen2.5-based ToolGen](https://huggingface.co/collections/reasonwang/toolgen-668a46a4959745ec8e9891f6)
 
 ToolGen is a framework that integrates tool knowledge directly into LLMs by representing tools as unique tokens, enabling seamless tool invocation and language generation.🔧🦙 With 47,000 tool tokens, ToolGen shows superior performance in both tool retrieval and task completion.

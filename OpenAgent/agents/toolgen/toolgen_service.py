@@ -17,11 +17,16 @@ from transformers import (
     LogitsProcessorList,
 )
 from unidecode import unidecode
+
+from OpenAgent.tools.src.rapidapi.rapidapi import RapidAPIWrapper
 from ..base import SingleChainAgent
 from fastchat.conversation import get_conv_template
 from huggingface_hub import hf_hub_download
 from .utils import get_toolbench_name
 from .inference import AllowKeyWordsProcessor, DisjunctiveTrie
+from flask import Flask, request, jsonify
+from vllm import LLM, SamplingParams
+from flask import stream_with_context
 
 
 SystemPrompt = '''You are an AutoGPT, capable of utilizing numerous tools and functions to complete the given task.
@@ -173,7 +178,7 @@ def load_toolgen_token_toobench_name_conversion(model_name_or_path, indexing):
     return toolgen_tokens_to_toolbench_name_dict, toolbench_name_to_toolgen_tokens_dict
 
 
-class ToolGen(SingleChainAgent):
+class ToolGenService(SingleChainAgent):
     def __init__(
             self,
             model_name_or_path: str,
@@ -184,9 +189,8 @@ class ToolGen(SingleChainAgent):
             cpu_offloading: bool=False, 
             max_sequence_length: int=8192
         ) -> None:
-        super(ToolGen, self).__init__(tools)
-
-        self.model_name = model_name_or_path
+        super(ToolGenService, self).__init__(tools)
+        # llm = LLM(model=model_name_or_path)
         self.indexing = indexing
         self.template = template
         self.max_sequence_length = max_sequence_length
@@ -240,7 +244,7 @@ class ToolGen(SingleChainAgent):
             logits_processor = None
 
         outputs = self.model.generate(
-            **inputs, 
+            **inputs,
             do_sample=do_sample if temperature > 0.0 else False,
             max_new_tokens=512,
             eos_token_id=self.tokenizer.eos_token_id,
@@ -254,7 +258,7 @@ class ToolGen(SingleChainAgent):
             "output_ids": output_ids,
             "output_length": output_length,
             "generated_text": generated_text
-        }       
+        }
         
     def add_message(self, message):
         self.conversation_history.append(message)
@@ -516,6 +520,8 @@ class ToolGen(SingleChainAgent):
         message = {
             "role": "assistant",
             "content": thought,
+            "action": action,
+            "arguments": arguments,
             "function_call": None,
             "tool_calls": [{
                 "id": None,
@@ -527,3 +533,70 @@ class ToolGen(SingleChainAgent):
             }]
         }
         return message, 0, num_tokens
+
+
+
+
+SystemPrompt = '''You are an AutoGPT, capable of utilizing numerous tools and functions to complete the given task.
+    1.First, I will provide you with the task description, and your task will commence.
+    2.At each step, you need to determine the next course of action by generating an action token.
+    3.Following the token, you will receive the documentation of the action corresponding to the token. You need to generate the input of the action, transitioning you to a new state. Subsequently, you will make decisions about the next steps, and repeat this process.
+    4.After several iterations of generating actions and inputs, you will ultimately complete the task and provide your final answer.
+    
+    Remember:
+    1.The state changes are irreversible, and you cannot return to a previous state.
+    2.Keep your actions concise, limiting them to best suits the current query.
+    3.You can make multiple attempts. If you plan to try different conditions continuously, perform one condition per try.
+    4.If you believe you have gathered enough information, generate the action "<<Finish>> with argument give_answer" to provide your answer for the task.
+    5.If you feel unable to handle the task from this step, generate the action "<<Finish>> with argument give_up_and_restart".
+    Let's Begin!
+    Task description: You should use actions to help handle the real time user querys. Remember:
+    ALWAYS generate "<<Finish>>" at the end of the task. And the final answer should contain enough information to show to the user. If you can't handle the task, or you find that actions always fail(the function is not valid now), use action <<Finish>> with give_up_and_restart.'''
+
+app = Flask(__name__)
+toolbench_key = os.environ.get("TOOLBENCH_KEY")
+rapidapi_wrapper = RapidAPIWrapper(
+    toolbench_key=toolbench_key,
+    rapidapi_key="",
+)
+toolgen_service = ToolGenService(
+    "reasonwang/ToolGen-WoSystem-Llama-3-8B-Instruct",
+    indexing="Atomic",
+    tools=rapidapi_wrapper,
+    template="llama-3",
+)
+
+@app.route('/generate', methods=['POST'])
+def generate():
+    data = request.get_json()
+    query = data.get('query', "")
+    system_prompt = data.get('system_prompt', SystemPrompt)
+    if system_prompt == "" or system_prompt is None:
+        system_prompt = SystemPrompt
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": query}
+    ]
+    print("messages: ", messages)
+
+    toolgen_service.restart()
+    # toolgen_service.start(
+    #     single_chain_max_step=16,
+    #     start_messages=messages,
+    # )
+
+    # return jsonify(outputs)
+    def generate_stream():
+        for status in toolgen_service.start(
+            single_chain_max_step=16,
+            start_messages=messages,
+            streaming=True,
+        ):
+            yield (json.dumps(status) + "\n").encode("utf-8")
+
+    return stream_with_context(generate_stream())
+
+
+if __name__ == '__main__':
+    # python -m OpenAgent.agents.toolgen.toolgen_service
+    app.run(host='0.0.0.0', port=5000)

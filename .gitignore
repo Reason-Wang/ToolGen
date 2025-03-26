@@ -2,7 +2,7 @@
 *.pyc
 *.ipynb_checkpoints
 *.ipynb
-data
+data/
 keys.json
 log_file.txt
 *tar.gz
@@ -12,3 +12,4 @@ evaluation/retrieval/efficiency
 training/wandb
 training/logs
 training/checkpoints
+!training/data
